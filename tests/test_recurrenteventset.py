@@ -129,7 +129,7 @@ def recurrenteventset_contains(request):
         request.getfuncargvalue('transaction')
         return partial(pg_contains, connection=connection)
     else:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 @pytest.mark.parametrize('item, expression, expected', [
@@ -195,8 +195,7 @@ def test_from_json(value, expected):
 
 def py_forward(expression, start, trim, n):
     """Python API for RecurrentEventSet.forward()"""
-    return list(it.islice(RecurrentEventSet.from_json(expression)
-                                         .forward(start, trim), n))
+    return list(it.islice(RecurrentEventSet.from_json(expression).forward(start, trim), n))
 
 
 def pg_forward(expression, start, trim, n, connection):
@@ -223,14 +222,11 @@ def recurrenteventset_forward(request):
         request.getfuncargvalue('transaction')
         return partial(pg_forward, connection=connection)
     else:
-        raise NotImplemented
+        raise NotImplementedError
 
 
 @pytest.mark.parametrize('expression, start, trim, expected', [
-    ([OR, [1, 15, 'day', 'month'], [15, 20, 'day', 'month']],
-     dt.datetime(2000, 1, 1), True,
-     [(dt.datetime(2000, 1, 1), dt.datetime(2000, 1, 20)),
-      (dt.datetime(2000, 2, 1), dt.datetime(2000, 2, 20))]),
+    ([OR, [1, 15, 'day', 'month'], [15, 20, 'day', 'month']], dt.datetime(2000, 1, 1), True, [(dt.datetime(2000, 1, 1), dt.datetime(2000, 1, 20)), (dt.datetime(2000, 2, 1), dt.datetime(2000, 2, 20))]),
     ([AND, [1, 15, 'day', 'month'], [10, 20, 'day', 'month']],
      dt.datetime(2000, 1, 1), True,
      [(dt.datetime(2000, 1, 10), dt.datetime(2000, 1, 15)),

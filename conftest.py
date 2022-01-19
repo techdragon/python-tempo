@@ -123,11 +123,11 @@ def pytest_collection_modifyitems(session, config, items):
 
 
 def pytest_runtest_setup(item):
-    transaction_marker = item.get_marker("transaction")
+    transaction_marker = item.get_closest_marker("transaction")
     if transaction_marker is not None:
         item.add_marker(pytest.mark.usefixtures('transaction'))
 
-    if item.get_marker("xfailifnodb") is not None:
+    if item.get_closest_marker("xfailifnodb") is not None:
         if not ({'TEMPO_DB_HOST',
              'TEMPO_DB_PORT',
              'TEMPO_DB_USER',
