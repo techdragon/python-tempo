@@ -14,11 +14,11 @@ jobs:
         os:
           - ubuntu-18.04
         python-version:
-          - '2.7'
-          - '3'
-          - '3.2'
-          - '3.3'
-          - '3.4'
+          - '2.7.18'
+          - '3.0.1'
+          - '3.2.5'
+          - '3.3.7'
+          - '3.4.10'
     services:
       # Label used to access the service container
       postgres:
