@@ -49,6 +49,7 @@ jobs:
           python -VV
           python -m site
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install --upgrade virtualenv tox tox-gh-actions          
+          python -m pip install --upgrade virtualenv tox 
+          python -m pip install tox-gh-actions==2.9.1
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "python -m tox"
