@@ -346,10 +346,11 @@ class RecurrentEventSet(object):
                         not item['exhausted']):
                         break
                 else:
-                    yield next((a, b) for a, b in generated.intervals
-                               if b == last_date)
-                    last_date = next(b for _, b in generated.intervals
-                                     if b > last_date)
+                    yield next((a, b) for a, b in generated.intervals if b == last_date)
+                    try:
+                        last_date = next(b for _, b in generated.intervals if b > last_date)
+                    except StopIteration:
+                        return
 
     @staticmethod
     def to_json_callback(operator, *args):
