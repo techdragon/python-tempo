@@ -53,6 +53,7 @@ class SparseInterval(object):
         """Produces interval, that contains space from both."""
         intervals = deque()
         intervals.extend(self._intervals)
+        # noinspection PyProtectedMember
         intervals.extend(other._intervals)  # pylint: disable=protected-access
         intervals = sorted(intervals, key=op.itemgetter(0))
 
@@ -65,6 +66,7 @@ class SparseInterval(object):
         contained by this and in 'other' in the same time."""
         intervals = deque()
         intervals.extend(self._intervals)
+        # noinspection PyProtectedMember
         intervals.extend(other._intervals)  # pylint: disable=protected-access
 
         if len(intervals) == 0:
@@ -85,6 +87,7 @@ class SparseInterval(object):
         intervals = deque()
         for a, b in self._intervals:
             intersects = False
+            # noinspection PyProtectedMember
             for c, d in other._intervals:  # pylint: disable=protected-access
                 if a < c < b:
                     intervals.append((a, c))
@@ -130,8 +133,8 @@ class SparseInterval(object):
 
     def __eq__(self, other):
         try:
-            return (self._intervals ==
-                    other._intervals)  # pylint: disable=protected-access
+            # noinspection PyProtectedMember
+            return self._intervals == other._intervals  # pylint: disable=protected-access
         except AttributeError:
             return False
 

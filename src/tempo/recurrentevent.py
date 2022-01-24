@@ -100,10 +100,10 @@ class RecurrentEvent(object):
 
     def __eq__(self, other):
         try:
-            return (self.start == other.start and
-                    self.stop == other.stop and
-                    self.unit == other.unit and
-                    self.recurrence == other.recurrence)
+            return self.start == other.start \
+                and self.stop == other.stop \
+                and self.unit == other.unit \
+                and self.recurrence == other.recurrence
         except AttributeError:
             return False
 
@@ -131,10 +131,7 @@ class RecurrentEvent(object):
 
         correction = BASE[self.unit]
 
-        return (
-            (self.start - correction) == 0 and
-            (self.stop - correction) == UNITS_MAX[self.unit][self.recurrence]
-        )
+        return (self.start - correction) == 0 and (self.stop - correction) == UNITS_MAX[self.unit][self.recurrence]
 
     def forward(self, start, trim=True):
         """Iterate time intervals starting from 'start'.

@@ -64,6 +64,7 @@ class RecurrentEventSetWidget(Input):
         """.format(uuid=str(uuid.uuid4()), attrs=flatatt(final_attrs),
                    value=value)
 
+    # noinspection PyMethodMayBeStatic,PyUnusedLocal
     def value_from_datadict(self, data, files, name):
         """Retrieves data, from HTML representation."""
         # pylint: disable=no-self-use,unused-argument

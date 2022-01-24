@@ -1,17 +1,16 @@
 
 # coding=utf-8
-import datetime as dt
 import json
-from functools import partial
 import itertools as it
 
 import pytest
 
 from tempo.recurrentevent import RecurrentEvent
-
+# noinspection PyProtectedMember
 from tempo.recurrenteventset import (AND, NOT, OR, _walk, RecurrentEventSet, Void)
+
 from tempo.unit import Unit
-from tests import Implementation
+from tests.data import DATA_FOR_TESTING_CONTAINS, DATA_FOR_TESTING_FORWARD
 
 
 def callback(op, *args):
@@ -98,55 +97,10 @@ def test_eq_with_other_type():
     assert not (recurrenteventset == other)
 
 
-def pg_contains(item, expression, connection):
-    """PostgreSQL binding RecurrentEventSet containment test
-    implementation."""
-    if isinstance(item, tuple):
-        item = list(item)
-
-    recurrenteventset = RecurrentEventSet(expression).to_json()
-    with connection.cursor() as cursor:
-        cursor.execute(
-            '''SELECT tempo_recurrenteventset_contains(%s, %s)''',
-            (json.dumps(recurrenteventset), item)
-        )
-        return cursor.fetchone()[0]
-
-
-def py_contains(item, expression):
-    """Python RecurrentEventSet containment test
-    implementation."""
-    return item in RecurrentEventSet(expression)
-
-
-@pytest.fixture(params=Implementation.values())
-def recurrenteventset_contains(request):
-    if request.param == Implementation.PYTHON:
-        return py_contains
-    elif request.param == Implementation.POSTGRESQL.args[0]:
-        connection = request.getfuncargvalue('connection')
-        request.getfuncargvalue('postgresql_tempo')
-        request.getfuncargvalue('transaction')
-        return partial(pg_contains, connection=connection)
-    else:
-        raise NotImplemented
-
-
-@pytest.mark.parametrize('item, expression, expected', [
-    (dt.datetime(2005, 5, 15),
-     (AND, RecurrentEvent(2, 8, 'month', 'year')),
-     True),
-    (dt.datetime(2005, 12, 15),
-     (AND, RecurrentEvent(2, 8, 'month', 'year')),
-     False),
-    (dt.datetime(2005, 5, 15),
-     (AND, RecurrentEvent(2, 8, 'month', 'year'),
-            (NOT, RecurrentEvent(4, 5, 'month', 'year'))),
-     True),
-])
-def test_contains(item, expression, expected, recurrenteventset_contains):
+@pytest.mark.parametrize('item, expression, expected', DATA_FOR_TESTING_CONTAINS)
+def test_contains(item, expression, expected):
     """Cases for containment test."""
-    assert recurrenteventset_contains(item, expression) == expected
+    assert (item in RecurrentEventSet(expression)) == expected
 
 
 @pytest.mark.parametrize('recurrenteventset, expected', [
@@ -159,8 +113,8 @@ def test_contains(item, expression, expected, recurrenteventset_contains):
      ),
      [AND, [1, 25, 'day', 'week']]),
     (RecurrentEventSet(
-         [AND, RecurrentEvent(5, 25, Unit.YEAR, None),
-          [NOT, RecurrentEvent(10, 15, 'year', None)]]
+        [AND, RecurrentEvent(5, 25, Unit.YEAR, None),
+        [NOT, RecurrentEvent(10, 15, 'year', None)]]
      ),
      [AND, [5, 25, 'year', None], [NOT, [10, 15, 'year', None]]]),
 ])
@@ -193,74 +147,10 @@ def test_from_json(value, expected):
     assert actual == expected
 
 
-def py_forward(expression, start, trim, n):
-    """Python API for RecurrentEventSet.forward()"""
-    return list(it.islice(RecurrentEventSet.from_json(expression)
-                                         .forward(start, trim), n))
-
-
-def pg_forward(expression, start, trim, n, connection):
-    """PostgreSQL API for RecurrentEventSet.forward()."""
-
-    recurrenteventset = RecurrentEventSet.from_json(expression).to_json()
-    with connection.cursor() as cursor:
-        cursor.execute(
-            '''SELECT * FROM tempo_recurrenteventset_forward(%s, %s, %s, %s)''',
-            (json.dumps(recurrenteventset), start, n, trim)
-        )
-
-        return list(cursor.fetchall())
-
-
-@pytest.fixture(params=Implementation.values())
-def recurrenteventset_forward(request):
-    """Various APIs for RecurrentEventSet.forwars()."""
-    if request.param == Implementation.PYTHON:
-        return py_forward
-    elif request.param == Implementation.POSTGRESQL.args[0]:
-        connection = request.getfuncargvalue('connection')
-        request.getfuncargvalue('postgresql_tempo')
-        request.getfuncargvalue('transaction')
-        return partial(pg_forward, connection=connection)
-    else:
-        raise NotImplemented
-
-
-@pytest.mark.parametrize('expression, start, trim, expected', [
-    ([OR, [1, 15, 'day', 'month'], [15, 20, 'day', 'month']],
-     dt.datetime(2000, 1, 1), True,
-     [(dt.datetime(2000, 1, 1), dt.datetime(2000, 1, 20)),
-      (dt.datetime(2000, 2, 1), dt.datetime(2000, 2, 20))]),
-    ([AND, [1, 15, 'day', 'month'], [10, 20, 'day', 'month']],
-     dt.datetime(2000, 1, 1), True,
-     [(dt.datetime(2000, 1, 10), dt.datetime(2000, 1, 15)),
-      (dt.datetime(2000, 2, 10), dt.datetime(2000, 2, 15))]),
-    ([AND, [1, 25, 'day', 'month'], [NOT, [10, 15, 'day', 'month']]],
-     dt.datetime(2000, 1, 1), True,
-     [(dt.datetime(2000, 1, 1), dt.datetime(2000, 1, 10)),
-      (dt.datetime(2000, 1, 15), dt.datetime(2000, 1, 25))]),
-    ([AND, [1, 10, 'day', 'month'], [15, 20, 'day', 'month']],
-     dt.datetime(2000, 1, 1), True,
-     []),
-    ([AND, [5, 10, 'day', 'month'], [15, 20, 'hour', 'day']],
-     dt.datetime(2000, 1, 1), True,
-     [(dt.datetime(2000, 1, 5, 15), dt.datetime(2000, 1, 5, 20)),
-      (dt.datetime(2000, 1, 6, 15), dt.datetime(2000, 1, 6, 20))]),
-    ([OR, [5, 10, 'day', 'month']],
-     dt.datetime(2000, 1, 8), False,
-     [(dt.datetime(2000, 1, 5), dt.datetime(2000, 1, 10)),
-      (dt.datetime(2000, 2, 5), dt.datetime(2000, 2, 10)),]),
-    ((OR,
-        (AND, [1, 4, 'day', 'week'], [10, 19, 'hour', 'day']),
-        (AND, [5, 6, 'day', 'week'], [10, 16, 'hour', 'day'])),
-     dt.datetime(2000, 1, 1), False,
-     [(dt.datetime(2000, 1, 3, 10, 0), dt.datetime(2000, 1, 3, 19, 0)),
-      (dt.datetime(2000, 1, 4, 10, 0), dt.datetime(2000, 1, 4, 19, 0)),
-      (dt.datetime(2000, 1, 5, 10, 0), dt.datetime(2000, 1, 5, 19, 0))])
-])
-def test_forward(expression, start, trim, expected, recurrenteventset_forward):
+@pytest.mark.parametrize('expression, start, trim, expected', DATA_FOR_TESTING_FORWARD)
+def test_forward(expression, start, trim, expected):
     """Various forward() cases."""
-    actual = recurrenteventset_forward(expression, start, trim, len(expected))
+    actual = list(it.islice(RecurrentEventSet.from_json(expression).forward(start, trim), len(expected)))
 
     print(actual)
     print(expected)
@@ -280,3 +170,25 @@ def test_forward(expression, start, trim, expected, recurrenteventset_forward):
 def test_validate_json(expression, expected):
     """Cases for RecurrentEventSet.validate_json()."""
     assert RecurrentEventSet.validate_json(expression) == expected
+
+
+# @pytest.mark.timeout(5)
+# @pytest.mark.parametrize('expression, start, trim, expected', DATA_FOR_TESTING_FORWARD)
+# def test_forward_in_a_for_loop(expression, start, trim, expected):
+#     """Various forward() cases."""
+#     for index, start_end_tuple in enumerate(RecurrentEventSet.from_json(expression).forward(start, trim)):
+#         print(start_end_tuple)
+#         print(expected[index])
+#         start_end_tuple = expected[index]
+#         assert start_end_tuple == expected[index]
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.parametrize('expression, start, trim, expected', DATA_FOR_TESTING_FORWARD)
+def test_forward_in_a_for_loop(expression, start, trim, expected):
+    """Various forward() cases."""
+    recurrent_event_set = RecurrentEventSet.from_json(['AND', [1, 7, 'day', 'week'], [8, 17, 'hour', 'day']])
+    for start, end in recurrent_event_set.forward(start):
+        print(start, end)
+        assert start
+        assert end

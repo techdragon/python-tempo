@@ -14,9 +14,11 @@ class RecurrentEventSetField(with_metaclass(models.SubfieldBase,
                                             models.Field)):
     """DB representation of recurrenteventset. Requires PostgreSQL 9.4+."""
 
+    # noinspection PyMethodMayBeStatic,PyUnusedLocal
     def db_type(self, connection):  # pylint: disable=unused-argument
         return 'jsonb'
 
+    # noinspection PyMethodMayBeStatic
     def to_python(self, value):
         if value is None or value == '':
             return None
@@ -25,12 +27,13 @@ class RecurrentEventSetField(with_metaclass(models.SubfieldBase,
 
         return RecurrentEventSet.from_json(value)
 
+    # noinspection PyMethodMayBeStatic
     def get_prep_lookup(self, lookup_type, value):
         # We only handle 'exact' and 'in'. All others are errors.
         if lookup_type == 'contains':
             return value.isoformat()
         elif lookup_type == 'intersects' or lookup_type == 'occurs_within':
-            return (value[0].isoformat(), value[1].isoformat())
+            return value[0].isoformat(), value[1].isoformat()
         else:
             raise TypeError('Lookup type %r not supported.' % lookup_type)
 
@@ -62,6 +65,7 @@ class Contains(models.Lookup):
                 (lhs, rhs),
                 (self.rhs,))
 
+
 RecurrentEventSetField.register_lookup(Contains)
 
 
@@ -85,6 +89,7 @@ class Intersects(models.Lookup):
                     ))
                 """ % (rhs, rhs, lhs, rhs), (stop, start, start))
 
+
 RecurrentEventSetField.register_lookup(Intersects)
 
 
@@ -107,5 +112,6 @@ class OccursWithin(models.Lookup):
                         false
                     ))
                 """ % (rhs, rhs, lhs, rhs), (start, stop, start))
+
 
 RecurrentEventSetField.register_lookup(OccursWithin)

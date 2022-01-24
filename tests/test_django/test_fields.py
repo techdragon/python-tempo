@@ -24,7 +24,7 @@ def test_contains(expression, datetime, expected):
     assert (len(objects) == 1) == expected
 
     if not expected:
-      return
+        return
 
     assert objects[0] == expected_object
 
@@ -47,7 +47,7 @@ def test_intersects(expression, start, stop, expected):
     assert (len(objects) == 1) == expected
 
     if not expected:
-      return
+        return
 
     assert objects[0] == expected_object
 
@@ -76,7 +76,7 @@ def test_occurs_within(expression, start, stop, expected):
     assert (len(objects) == 1) == expected
 
     if not expected:
-      return
+        return
 
     assert objects[0] == expected_object
 

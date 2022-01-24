@@ -1,7 +1,7 @@
 # coding=utf-8
 import json
 import random as rnd
-from datetime import datetime as dt, timedelta
+from datetime import datetime as dt
 from itertools import islice, chain
 
 import pytest
@@ -11,7 +11,7 @@ from tempo.recurrentevent import Unit as U, RecurrentEvent
 from tempo.timeutils import add_delta, delta, floor
 from tempo.unit import MIN, MAX, BASE
 
-from tests.utils import randuniq, CASES, unit_span, guess, sample
+from tests.utils import randuniq, CASES
 
 
 @pytest.mark.parametrize('unit, recurrence, interval, datetime, expected', [
@@ -162,6 +162,7 @@ def test_forward_corner_cases(interval, unit, recurrence, start, trim,
 
 
 N = 10
+
 
 # TODO Refactor using fixtures
 @pytest.mark.parametrize('unit, overlap, trim', chain.from_iterable([

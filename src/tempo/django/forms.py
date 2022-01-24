@@ -13,6 +13,7 @@ class RecurrentEventSetField(Field):
     # pylint: disable=no-init
     widget = RecurrentEventSetWidget
 
+    # noinspection PyMethodMayBeStatic
     def clean(self, value):
         """Cleans and validates RecurrentEventSet expression."""
         # pylint: disable=no-self-use

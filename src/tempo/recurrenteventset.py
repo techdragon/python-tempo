@@ -1,5 +1,6 @@
 # coding=utf-8
 """Provides RecurrentEventSet class."""
+import datetime
 import itertools as it
 from collections import deque
 import json
@@ -10,7 +11,7 @@ from six.moves import reduce  # pylint: disable=redefined-builtin
 from tempo.recurrentevent import RecurrentEvent
 from tempo.sparseinterval import SparseInterval
 from tempo.unit import MIN, MAX, Unit
-
+from typing import Any, Union
 
 NOT = 'NOT'
 AND = 'AND'
@@ -63,15 +64,15 @@ def _evaluate(result_stack, callback):
         pass
 
 
-def _isexpression(value):
+def _isexpression(value) -> bool:
     """Checks if 'value' is an expression."""
-    return (isinstance(value, (tuple, list, deque)) and
-            len(value) > 0 and
-            isinstance(value[0], string_types) and
-            value[0] in _OPS)
+    return isinstance(value, (tuple, list, deque)) \
+           and len(value) > 0 \
+           and isinstance(value[0], string_types) \
+           and value[0] in _OPS
 
 
-def _walk(expression, callback):
+def _walk(expression: tuple, callback: callable) -> Any:
     """Walks the 'expression' and applies 'callback' to operators and
     their arguments.
 
@@ -160,13 +161,13 @@ class RecurrentEventSet(object):
         It means: 'From 10:00 to 19:00 every day, except from
         14:00 to 15:00, and weekends'.
     """
-    def __init__(self, expression):
-        self.expression = expression
+    def __init__(self, expression: tuple):
+        self.expression: tuple = expression
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'RecurrentEventSet({})'.format(repr(self.expression))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     @staticmethod
@@ -177,7 +178,7 @@ class RecurrentEventSet(object):
         sample.extend(args)
         raise Void
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not hasattr(other, 'expression'):
             return False
 
@@ -234,11 +235,11 @@ class RecurrentEventSet(object):
 
         return _walk(self.expression, callback)
 
-    def forward(self, start, trim=True):
+    def forward(self, start: datetime.datetime, trim: bool = True) -> tuple:
         """Generates intervals according to the expression.
 
         Intervals never overlap.
-        Each next interval is largest possible interval.
+        Each next interval is the largest possible interval.
 
         Parameters
         ----------
@@ -247,7 +248,7 @@ class RecurrentEventSet(object):
         trim : bool
             If `True` (which is default), the starting point of a first
             interval will always be equal to or greater than 'start'.
-            Otherwise it will be equal to the point, where the interval
+            Otherwise, it will be equal to the point, where the interval
             actually starts, which may be placed earlier in time, that
             'start'.
 
@@ -264,9 +265,8 @@ class RecurrentEventSet(object):
             1. It generates intervals from RecurrentEvent instances and
                applies set logic operators on them.
             2. Checks if resulting interval has gap.
-            3. Checks if there is a possibility, that this gap will gone,
-               by checking if some of the generators could possibly generate
-               interval that will intersect with gap.
+            3. Checks if there is a possibility that this gap will gone,
+               by checking if some generators could possibly generate interval that will intersect with gap.
             4. If checks succeed, yields interval previous to gap.
             5. If not - iterates generators until check succeed.
 
@@ -276,7 +276,7 @@ class RecurrentEventSet(object):
             'all': []
         }
 
-        def prepare(operator, *args):
+        def prepare(operator: str, *args) -> Result:
             """Initializes forward() generators of recurrentevents."""
             prepared = [operator]
             for arg in args:
@@ -295,7 +295,7 @@ class RecurrentEventSet(object):
 
         generators = _walk(self.expression, prepare).value
 
-        def generate(operator, *args):
+        def generate(operator: str, *args) -> SparseInterval:
             """Generates SparseInterval instance current and past
             results of RecurrentEvent.forward() generators with respect
             to 'operator' of given expression."""
@@ -318,9 +318,7 @@ class RecurrentEventSet(object):
                 return reduce(lambda m, v: m.union(v), operands)
             elif operator == NOT:
                 union = reduce(lambda m, v: m.union(v), operands)
-                intervals = it.chain((MIN,),
-                                     it.chain.from_iterable(union.intervals),
-                                     (MAX,))
+                intervals = it.chain((MIN,), it.chain.from_iterable(union.intervals), (MAX,))
                 return SparseInterval(*zip(intervals, intervals))
             else:
                 raise AssertionError
@@ -329,8 +327,7 @@ class RecurrentEventSet(object):
         while True:
             generated = _walk(generators, generate)
 
-            if (len(generated.intervals) == 0 and
-                all(e['exhausted'] for e in context['all'])):
+            if len(generated.intervals) == 0 and all(e['exhausted'] for e in context['all']):
                 return
             if trim:
                 generated = generated.trim(start=start)
@@ -341,10 +338,9 @@ class RecurrentEventSet(object):
                     last_date = generated.intervals[0][1]
 
                 for item in context['all']:
-                    if ((len(item['results'].intervals) == 0 or
-                         item['results'].intervals[-1][1] < last_date) and
-                        not item['exhausted']):
-                        break
+                    if len(item['results'].intervals) == 0 or item['results'].intervals[-1][1] < last_date:
+                        if not item['exhausted']:
+                            break
                 else:
                     yield next((a, b) for a, b in generated.intervals if b == last_date)
                     try:
@@ -433,9 +429,7 @@ class RecurrentEventSet(object):
 
                 recurrence = e[3]
 
-                if (not hasattr(recurrence, 'lower') or
-                    recurrence.lower() not in _UNITS and
-                    recurrence is not None):
+                if not hasattr(recurrence, 'lower') or recurrence.lower() not in _UNITS and recurrence is not None:
                     return False
 
         return True

@@ -114,24 +114,23 @@ def django_postgresql_tempo(request):
     request.addfinalizer(finalizer)
 
 
+# noinspection PyUnusedLocal
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
-        if ({'django_db', 'db', 'connection', 'transaction'} &
-            set(item.keywords.keys()) or
-            item.name.lower() == 'docs/source/usage.rst'):
+        if ({'django_db', 'db', 'connection', 'transaction'} & set(item.keywords.keys())
+            or item.name.lower() == 'docs/source/usage.rst'):
             item.add_marker('xfailifnodb')
 
 
 def pytest_runtest_setup(item):
-    transaction_marker = item.get_marker("transaction")
+    transaction_marker = item.get_closest_marker("transaction")
     if transaction_marker is not None:
         item.add_marker(pytest.mark.usefixtures('transaction'))
 
-    if item.get_marker("xfailifnodb") is not None:
+    if item.get_closest_marker("xfailifnodb") is not None:
         if not ({'TEMPO_DB_HOST',
              'TEMPO_DB_PORT',
              'TEMPO_DB_USER',
              'TEMPO_DB_PASSWORD',
-             'TEMPO_DB_NAME'} <=
-             set(os.environ.keys())):
+             'TEMPO_DB_NAME'} <= set(os.environ.keys())):
             pytest.xfail('Database is not setup.')

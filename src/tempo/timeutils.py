@@ -29,7 +29,7 @@ def floor(datetime, unit):
 
     Examples
     --------
-    >>> import datetime
+    >>> from datetime import datetime
     >>> floor(datetime.datetime(2014, 10, 15, 5, 15, 45), Unit.HOUR)
     ... datetime.datetime(2014, 10, 15, 5, 0, 0)
 
@@ -43,14 +43,11 @@ def floor(datetime, unit):
     elif unit == Unit.DAY:
         return datetime.replace(hour=0, minute=0, second=0, microsecond=0)
     elif unit == Unit.WEEK:
-        return (datetime.replace(hour=0, minute=0, second=0, microsecond=0) -
-                dt.timedelta(days=datetime.weekday()))
+        return datetime.replace(hour=0, minute=0, second=0, microsecond=0) - dt.timedelta(days=datetime.weekday())
     elif unit == Unit.MONTH:
-        return datetime.replace(day=1, hour=0, minute=0, second=0,
-                                microsecond=0)
+        return datetime.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     elif unit == Unit.YEAR:
-        return datetime.replace(month=1, day=1, hour=0, minute=0, second=0,
-                                microsecond=0)
+        return datetime.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
         raise ValueError
 
@@ -86,11 +83,9 @@ def delta(datetime1, datetime2, unit):
     elif unit == Unit.DAY:
         return timedelta.total_seconds() // SECONDS_IN_DAY
     elif unit == Unit.WEEK:
-        return ((timedelta.total_seconds() // SECONDS_IN_DAY +
-                 datetime1.weekday()) // 7)
+        return (timedelta.total_seconds() // SECONDS_IN_DAY + datetime1.weekday()) // 7
     elif unit == Unit.MONTH:
-        return (((datetime2.year - datetime1.year) * 12) -
-                datetime1.month + datetime2.month)
+        return ((datetime2.year - datetime1.year) * 12) - datetime1.month + datetime2.month
     elif unit == Unit.YEAR:
         return datetime2.year - datetime1.year
 
@@ -98,8 +93,7 @@ def delta(datetime1, datetime2, unit):
 def _add_years(datetime, years):
     """Adds 'delta' of years to a 'datetime'."""
     sign = int(math.copysign(1, years))
-    days = (abs(years) * DAYS_IN_COMMON_YEAR +
-            leapdays(*sorted((datetime.year, datetime.year + years)))) * sign
+    days = (abs(years) * DAYS_IN_COMMON_YEAR + leapdays(*sorted((datetime.year, datetime.year + years)))) * sign
     _check_overflow(datetime, days=years)
 
     return datetime + dt.timedelta(days=days)
@@ -119,14 +113,14 @@ def _check_overflow(datetime, seconds=0, minutes=0, hours=0,
         raise OverflowError
 
 
-def add_delta(datetime, n, unit):
+def add_delta(datetime, n: int, unit):
     """Adds a 'delta' expressed in 'unit' to given 'datetime'.
 
     Parameters
     ----------
     datetime : datetime.datetime
         A datetime to which delta will be added.
-    delta : int
+    n : int
         Delta to add.
     unit : str
         Units of delta.
@@ -148,8 +142,8 @@ def add_delta(datetime, n, unit):
     Examples
     --------
     >>> from datetime import datetime
-    >>> add_delta(datetime(2000, 10, 10), 5, Unit.DAY)
-    ... datetime(2000, 10, 15, 0, 0)
+    >>> add_delta(datetime.datetime(2000, 10, 10), 5, Unit.DAY)
+    ... datetime.datetime(2000, 10, 15, 0, 0)
     """
     if unit == Unit.SECOND:
         _check_overflow(datetime, seconds=n)

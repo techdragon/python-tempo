@@ -54,7 +54,7 @@ setup(
         'postgresql': read_requirements('postgresql-requirements.txt')
     },
     install_requires=read_requirements('requirements.txt'),
-    package_data= {
+    package_data={
         'tempo.postgresql': ['*.sql']
     }
 )

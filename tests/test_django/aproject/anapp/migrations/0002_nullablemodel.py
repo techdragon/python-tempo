@@ -5,6 +5,7 @@ from django.db import models, migrations
 import tempo.django.fields
 
 
+# noinspection PyPep8
 class Migration(migrations.Migration):
 
     dependencies = [

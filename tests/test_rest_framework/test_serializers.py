@@ -8,6 +8,7 @@ from tempo.recurrenteventset import RecurrentEventSet
 class ASerializer(serializers.Serializer):
     schedule = RecurrentEventSetField()
 
+
 class AnObject:
     def __init__(self, schedule):
         self.schedule = schedule

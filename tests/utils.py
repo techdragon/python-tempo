@@ -39,8 +39,7 @@ CASES = [
     for unit, recurrence in
     permutations([None, Unit.YEAR, Unit.MONTH, Unit.WEEK,
                   Unit.DAY, Unit.HOUR, Unit.MINUTE, Unit.SECOND], 2)
-    if unit is not None and
-       (recurrence is None or ORDER[unit] < ORDER[recurrence])
+    if unit is not None and (recurrence is None or ORDER[unit] < ORDER[recurrence])
 ]
 
 

@@ -17,4 +17,5 @@ class AModelAdminForm(forms.ModelForm):
 class AModelAdmin(admin.ModelAdmin):
     form = AModelAdminForm
 
+
 admin.site.register(AModel, AModelAdmin)

@@ -18,6 +18,7 @@ class RecurrentEventSetField(serializers.Field):
         'incorrect_format': 'Incorrect format.',
     }
 
+    # noinspection PyMethodMayBeStatic
     def to_representation(self, obj):
         return obj.to_json()
 
