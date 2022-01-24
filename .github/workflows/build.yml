@@ -1,0 +1,56 @@
+name: Converted Workflow
+'on':
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  Build:
+    runs-on: '${{ matrix.os }}'
+    strategy:
+      matrix:
+        os:
+          - ubuntu-18.04
+        python-version:
+          - '2.7.18'
+          - '3.3.7'
+          - '3.4.10'
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: 'Set up Python ${{ matrix.python-version }}'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '${{ matrix.python-version }}'
+      - shell: 'bash'
+        run: |
+          echo "TEMPO_DB_HOST=localhost" >> $GITHUB_ENV
+          echo "TEMPO_DB_PORT=5432" >> $GITHUB_ENV
+          echo "TEMPO_DB_USER=postgres" >> $GITHUB_ENV
+          echo "TEMPO_DB_PASSWORD=postgres" >> $GITHUB_ENV
+          echo "TEMPO_DB_NAME=test" >> $GITHUB_ENV
+      - name: "Install dependencies"
+        run: |
+          set -xe
+          python -VV
+          python -m site
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade virtualenv tox 
+          python -m pip install tox-gh-actions==2.9.1
+      - name: "Run tox targets for ${{ matrix.python-version }}"
+        continue-on-error: true
+        run: "python -m tox"
